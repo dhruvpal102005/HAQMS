@@ -1,0 +1,95 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  RECEPTIONIST
+  DOCTOR
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(RECEPTIONIST)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  doctor    Doctor?
+}
+
+model Doctor {
+  id              String        @id @default(uuid())
+  name            String
+  email           String        @unique
+  specialization  String
+  department      String
+  consultationFee Int
+  experience      Int
+  shiftStart      String        @default("09:00")
+  shiftEnd        String        @default("17:00")
+  userId          String?       @unique
+  user            User?         @relation(fields: [userId], references: [id])
+  appointments    Appointment[]
+  queueTokens     QueueToken[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Patient {
+  id             String        @id @default(uuid())
+  name           String
+  email          String?       @unique
+  phoneNumber    String
+  age            Int
+  gender         String
+  medicalHistory String?
+  appointments   Appointment[]
+  queueTokens    QueueToken[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Appointment {
+  id              String       @id @default(uuid())
+  patientId       String
+  patient         Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId        String
+  doctor          Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  appointmentDate DateTime
+  reason          String       @default("")
+  status          String       @default("PENDING")
+  queueTokens     QueueToken[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@unique([doctorId, appointmentDate])
+  @@index([doctorId])
+  @@index([patientId])
+  @@index([status])
+}
+
+model QueueToken {
+  id            String       @id @default(uuid())
+  tokenNumber   Int
+  patientId     String
+  patient       Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctorId      String
+  doctor        Doctor       @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  status        String       @default("WAITING")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([doctorId])
+  @@index([patientId])
+  @@index([status])
+  @@index([createdAt])
+}
