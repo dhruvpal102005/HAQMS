@@ -56,16 +56,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Listen on port
-app.listen(PORT, () => {
-  console.log(`===================================================`);
-  console.log(`   HAQMS BACKEND SERVER IS RUNNING ON PORT ${PORT}`);
-  console.log(`   ENVIRONMENT: ${process.env.NODE_ENV}`);
-  console.log(`===================================================`);
-});
+// Listen on port conditionally (skip if importing as a Vercel serverless function)
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`===================================================`);
+    console.log(`   HAQMS BACKEND SERVER IS RUNNING ON PORT ${PORT}`);
+    console.log(`   ENVIRONMENT: ${process.env.NODE_ENV}`);
+    console.log(`===================================================`);
+  });
+}
 
 // Catch unhandled rejections
 process.on('unhandledRejection', (reason, promise) => {
   console.error('Unhandled Rejection at:', promise, 'reason:', reason);
   // Intentionally do not exit process so candidates see unhandled promise logs
 });
+
+module.exports = app;
