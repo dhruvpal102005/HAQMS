@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import Navbar from '@/components/common/Navbar';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Users, CalendarDays, Activity, Search, Sparkles, UserPlus, 
   Trash2, ClipboardList, TrendingUp, DollarSign, Award, Clock,
@@ -32,6 +33,7 @@ export default function Dashboard() {
   const [patients, setPatients] = useState([]);
   const [patientsLoading, setPatientsLoading] = useState(false);
   const [patientSearch, setPatientSearch] = useState('');
+  const [patientSearchInput, setPatientSearchInput] = useState('');
   const [patientGender, setPatientGender] = useState('All');
   const [patientsPagination, setPatientsPagination] = useState({ page: 1, totalPages: 1 });
   
@@ -95,7 +97,15 @@ export default function Dashboard() {
     }
   };
 
-  // Trigger Patient List Fetch (Every keystroke trigger re-renders parent! - Performance bug)
+  // Debounce search input to update search query after 300ms delay
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setPatientSearch(patientSearchInput);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [patientSearchInput]);
+
+  // Trigger Patient List Fetch
   useEffect(() => {
     if (user.role === 'RECEPTIONIST' || user.role === 'ADMIN') {
       fetchPatients(1);
@@ -454,8 +464,8 @@ export default function Dashboard() {
                       </div>
                       <input
                         type="text"
-                        value={patientSearch}
-                        onChange={(e) => setPatientSearch(e.target.value)}
+                        value={patientSearchInput}
+                        onChange={(e) => setPatientSearchInput(e.target.value)}
                         placeholder="Search by name, phone or email..."
                         className="block w-full pl-9 pr-3 py-2 border border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/50 rounded-lg text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                       />
@@ -894,7 +904,7 @@ export default function Dashboard() {
                       without optional chaining! If medicalHistory is null (which is the case for Batman, Clark Kent, etc.),
                       this code throws: "Cannot read properties of null (reading 'toUpperCase')" and crashes the app! */}
                   <p className="text-slate-700 dark:text-slate-300 leading-5 text-sm font-semibold">
-                    {selectedPatientHistory.medicalHistory.toUpperCase()}
+                    {selectedPatientHistory.medicalHistory?.toUpperCase() || 'NO CLINICAL HISTORY RECORDED'}
                   </p>
                 </div>
 
